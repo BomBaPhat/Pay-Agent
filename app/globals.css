@@ -29,8 +29,8 @@
   position: absolute;
   top: 50%;
   left: 0;
-  margin-top: -16px;
-  animation: loading-slide 1.9s ease-in-out infinite;
+  margin-top: -18.5px;
+  animation: loading-slide 3.2s ease-in-out infinite;
 }
 
 @keyframes loading-slide {
