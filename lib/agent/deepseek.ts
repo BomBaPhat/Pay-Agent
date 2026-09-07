@@ -20,7 +20,8 @@ export interface AgentChatMessage {
 }
 
 export interface ProposedPayment {
-  serviceId: string;
+  /** null khi đây là gửi trực tiếp (send_usdc_direct), không gắn với service nào trong danh mục. */
+  serviceId: string | null;
   recipient: string;
   amountUsdc: number;
   reason: string;
@@ -50,6 +51,27 @@ const PROPOSE_PAYMENT_TOOL = {
         reason: { type: "string", description: "Tóm tắt ngắn gọn lý do thanh toán, theo yêu cầu của user" },
       },
       required: ["serviceId", "reason"],
+    },
+  },
+} as const;
+
+const SEND_USDC_DIRECT_TOOL = {
+  type: "function",
+  function: {
+    name: "send_usdc_direct",
+    description:
+      "Gửi USDC trực tiếp tới một địa chỉ ví do user chỉ định rõ ràng, KHÔNG thuộc danh mục dịch vụ. Chỉ dùng khi user tự cung cấp địa chỉ ví (dạng 0x...) và số tiền cụ thể trong tin nhắn — không tự bịa địa chỉ, không đoán số tiền. Khoản này vẫn bị policy engine kiểm tra như mọi thanh toán khác (hạn mức ngày, hạn mức/giao dịch, ngưỡng cần duyệt) — không phải muốn gửi bao nhiêu cũng được duyệt ngay.",
+    parameters: {
+      type: "object",
+      properties: {
+        recipient: {
+          type: "string",
+          description: "Địa chỉ ví nhận, dạng 0x... — lấy đúng nguyên văn từ tin nhắn user, không tự bịa",
+        },
+        amountUsdc: { type: "number", description: "Số USDC cần gửi, lấy đúng từ yêu cầu của user" },
+        reason: { type: "string", description: "Tóm tắt ngắn gọn lý do gửi, theo yêu cầu của user" },
+      },
+      required: ["recipient", "amountUsdc", "reason"],
     },
   },
 } as const;
@@ -86,12 +108,11 @@ function buildSystemPrompt(services: Service[], x402Resources: X402Resource[]): 
 
   return [
     "Bạn là AI agent thanh toán của AgentPay, hoạt động thay mặt user để trả USDC trên mạng Arc.",
-    "Có hai cách trả tiền:",
-    "1. propose_payment — chuyển khoản USDC trực tiếp cho dịch vụ trong danh mục dịch vụ.",
-    "2. pay_x402_resource — trả phí cho tài nguyên x402 qua Circle Gateway (nanopayment, sub-cent, không tốn gas).",
-    "Chỉ dùng đúng id có trong danh mục tương ứng và đúng giá niêm yết.",
-    "Không tự đặt giá khác, không đề xuất thanh toán cho thứ ngoài danh mục — nếu user muốn vậy, giải thích là chưa được hỗ trợ.",
-    "Nếu yêu cầu của user không rõ ràng, hỏi lại thay vì đoán và gọi tool.",
+    "Có ba cách trả tiền:",
+    "1. propose_payment — chuyển khoản USDC cho dịch vụ trong danh mục dịch vụ (dùng đúng serviceId + giá niêm yết, không tự đặt giá khác).",
+    "2. pay_x402_resource — trả phí cho tài nguyên x402 qua Circle Gateway (nanopayment, sub-cent, không tốn gas), đúng resourceId trong danh mục x402.",
+    "3. send_usdc_direct — gửi USDC trực tiếp tới MỘT địa chỉ ví do user tự cung cấp rõ ràng trong tin nhắn (không thuộc danh mục dịch vụ). Chỉ dùng khi user tự đưa ra địa chỉ (0x...) và số tiền cụ thể — không tự bịa địa chỉ hay đoán số tiền. Khoản này vẫn qua policy engine như mọi thanh toán khác (có thể bị từ chối hoặc cần duyệt nếu vượt hạn mức) — nói rõ điều đó với user nếu họ hỏi.",
+    "Nếu yêu cầu của user không rõ ràng (thiếu địa chỉ, thiếu số tiền...), hỏi lại thay vì đoán và gọi tool.",
     "Nếu tin nhắn không liên quan thanh toán, chỉ trò chuyện bình thường, không gọi tool.",
     "Trả lời ngắn gọn, tiếng Việt trừ khi user chủ động dùng ngôn ngữ khác.",
     "",
@@ -140,7 +161,9 @@ export async function runAgentTurn(params: {
     body: JSON.stringify({
       model,
       messages,
-      tools: x402Resources.length ? [PROPOSE_PAYMENT_TOOL, PAY_X402_TOOL] : [PROPOSE_PAYMENT_TOOL],
+      tools: x402Resources.length
+        ? [PROPOSE_PAYMENT_TOOL, SEND_USDC_DIRECT_TOOL, PAY_X402_TOOL]
+        : [PROPOSE_PAYMENT_TOOL, SEND_USDC_DIRECT_TOOL],
       tool_choice: "auto",
     }),
   });
@@ -179,6 +202,42 @@ export async function runAgentTurn(params: {
 
     return {
       reply: message?.content?.trim() || "Mình không tìm thấy tài nguyên x402 đó trong danh mục.",
+      intent: null,
+      x402Intent: null,
+    };
+  }
+
+  if (toolCall?.function?.name === "send_usdc_direct") {
+    let args: { recipient?: string; amountUsdc?: number; reason?: string } = {};
+    try {
+      args = JSON.parse(toolCall.function.arguments || "{}");
+    } catch {
+      args = {};
+    }
+
+    const recipient = typeof args.recipient === "string" ? args.recipient.trim() : "";
+    const isValidAddress = /^0x[a-fA-F0-9]{40}$/.test(recipient);
+    const amount = Number(args.amountUsdc);
+
+    if (isValidAddress && Number.isFinite(amount) && amount > 0) {
+      return {
+        reply:
+          message?.content?.trim() ||
+          `Mình sẽ đề xuất gửi ${amount} USDC trực tiếp tới ${recipient}, bạn xác nhận nhé.`,
+        intent: {
+          serviceId: null,
+          recipient,
+          amountUsdc: amount,
+          reason: args.reason || "Gửi USDC trực tiếp theo yêu cầu",
+        },
+        x402Intent: null,
+      };
+    }
+
+    return {
+      reply:
+        message?.content?.trim() ||
+        "Cần địa chỉ ví hợp lệ (dạng 0x...) và số USDC cụ thể để gửi trực tiếp — bạn cho mình đủ thông tin nhé.",
       intent: null,
       x402Intent: null,
     };
