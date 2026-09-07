@@ -28,17 +28,26 @@ function LoginForm() {
   async function handleGoogleLogin() {
     setError(null);
     setLoading("google");
-    const supabase = createSupabaseBrowserClient();
-    const { error: signInError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
 
-    if (signInError) {
-      setError(signInError.message);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error: signInError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+
+      if (signInError) {
+        setError(signInError.message);
+        setLoading(null);
+      }
+      // Thành công: Supabase tự redirect sang Google, không cần làm gì thêm.
+    } catch (err) {
+      // createSupabaseBrowserClient() throw đồng bộ nếu thiếu
+      // NEXT_PUBLIC_SUPABASE_URL/PUBLISHABLE_KEY — nếu không bắt ở đây, nút sẽ
+      // kẹt "Redirecting..." mãi mãi vì setLoading(null) không bao giờ chạy tới.
+      setError(err instanceof Error ? err.message : "Chưa cấu hình Supabase — xem docs/SETUP.md.");
       setLoading(null);
     }
-    // Thành công: Supabase tự redirect sang Google, không cần làm gì thêm.
   }
 
   async function handleEvmLogin() {
