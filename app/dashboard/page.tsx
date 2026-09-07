@@ -65,7 +65,7 @@ export default async function DashboardPage() {
   const maxDayUsdc = Math.max(...report.byDay.map((d) => d.totalUsdc), dailyLimit, 0.01);
 
   return (
-    <div className="flex min-h-screen flex-col bg-ink text-paper md:flex-row">
+    <div className="flex min-h-screen flex-col bg-app-bg text-app-text md:flex-row">
       <AppSidebar />
 
       <main className="min-w-0 flex-1 px-6 py-8 lg:px-10">
@@ -74,13 +74,13 @@ export default async function DashboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-xl font-semibold">Welcome back, builder!</h1>
-              <p className="mt-1 text-sm text-paper/50">Your agent&rsquo;s wallet, capped by the policy you set.</p>
+              <p className="mt-1 text-sm text-app-muted">Your agent&rsquo;s wallet, capped by the policy you set.</p>
             </div>
             <a
               href={`https://testnet.arcscan.app/address/${wallet.address}`}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full border border-ink-line px-3 py-1.5 font-mono text-xs text-paper/60 transition hover:border-paper/30 hover:text-paper"
+              className="rounded-full border border-app-border px-3 py-1.5 font-mono text-xs text-app-muted transition hover:border-app-muted-2 hover:text-app-text"
               title={wallet.address}
             >
               {truncateAddress(wallet.address)}
@@ -96,22 +96,22 @@ export default async function DashboardPage() {
 
           {/* Stat cards */}
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-ink-line bg-ink-panel p-5">
-              <p className="text-xs uppercase tracking-[0.1em] text-paper/40">Total Vault Balance</p>
+            <div className="rounded-2xl border border-app-border bg-app-panel p-5">
+              <p className="text-xs uppercase tracking-[0.1em] text-app-muted-2">Total Vault Balance</p>
               <p className="mt-2 font-mono text-2xl font-medium">
-                {balanceUsdc.toFixed(2)} <span className="text-sm font-normal text-paper/40">USDC</span>
+                {balanceUsdc.toFixed(2)} <span className="text-sm font-normal text-app-muted-2">USDC</span>
               </p>
               {balanceError && <p className="mt-1 text-xs text-denied">{balanceError}</p>}
             </div>
-            <div className="rounded-2xl border border-ink-line bg-ink-panel p-5">
-              <p className="text-xs uppercase tracking-[0.1em] text-paper/40">Daily Spent / Limit</p>
+            <div className="rounded-2xl border border-app-border bg-app-panel p-5">
+              <p className="text-xs uppercase tracking-[0.1em] text-app-muted-2">Daily Spent / Limit</p>
               <p className="mt-2 font-mono text-2xl font-medium">
                 {report.spentTodayUsdc.toFixed(2)}{" "}
-                <span className="text-sm font-normal text-paper/40">/ {dailyLimit.toFixed(2)} USDC</span>
+                <span className="text-sm font-normal text-app-muted-2">/ {dailyLimit.toFixed(2)} USDC</span>
               </p>
             </div>
-            <div className="rounded-2xl border border-ink-line bg-ink-panel p-5">
-              <p className="text-xs uppercase tracking-[0.1em] text-paper/40">Agent Status</p>
+            <div className="rounded-2xl border border-app-border bg-app-panel p-5">
+              <p className="text-xs uppercase tracking-[0.1em] text-app-muted-2">Agent Status</p>
               <p className="mt-2 flex items-center gap-2 text-2xl font-medium">
                 <span
                   className={`h-2.5 w-2.5 rounded-full ${walletPending ? "bg-pending" : "bg-confirmed"}`}
@@ -123,8 +123,8 @@ export default async function DashboardPage() {
 
           {/* Analytics + quick policy */}
           <div className="mt-4 grid gap-4 lg:grid-cols-[1.3fr_1fr]">
-            <div className="rounded-2xl border border-ink-line bg-ink-panel p-5">
-              <p className="text-xs uppercase tracking-[0.1em] text-paper/40">Spending Analytics — last 7 days</p>
+            <div className="rounded-2xl border border-app-border bg-app-panel p-5">
+              <p className="text-xs uppercase tracking-[0.1em] text-app-muted-2">Spending Analytics — last 7 days</p>
               <div className="mt-5 flex h-32 items-end gap-3">
                 {report.byDay.map((d) => {
                   const heightPct = Math.max((d.totalUsdc / maxDayUsdc) * 100, d.totalUsdc > 0 ? 6 : 2);
@@ -132,41 +132,41 @@ export default async function DashboardPage() {
                     <div key={d.date} className="flex flex-1 flex-col items-center gap-2">
                       <div className="flex h-24 w-full items-end">
                         <div
-                          className={`w-full rounded-t-md ${d.totalUsdc > 0 ? "bg-confirmed" : "bg-ink-line"}`}
+                          className={`w-full rounded-t-md ${d.totalUsdc > 0 ? "bg-confirmed" : "bg-app-border"}`}
                           style={{ height: `${heightPct}%` }}
                           title={`${d.totalUsdc.toFixed(2)} USDC`}
                         />
                       </div>
-                      <span className="text-[11px] text-paper/40">{d.label}</span>
+                      <span className="text-[11px] text-app-muted-2">{d.label}</span>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-ink-line bg-ink-panel p-5">
+            <div className="rounded-2xl border border-app-border bg-app-panel p-5">
               <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.1em] text-paper/40">Quick Policy Guardrails</p>
+                <p className="text-xs uppercase tracking-[0.1em] text-app-muted-2">Quick Policy Guardrails</p>
                 <Link href="/policy" className="text-xs text-confirmed hover:underline">
                   Edit
                 </Link>
               </div>
               <dl className="mt-4 space-y-3 text-sm">
                 <div className="flex items-center justify-between">
-                  <dt className="text-paper/50">Max Single Tx</dt>
-                  <dd className="rounded-md bg-ink px-2 py-0.5 font-mono text-xs">
+                  <dt className="text-app-muted">Max Single Tx</dt>
+                  <dd className="rounded-md bg-app-bg px-2 py-0.5 font-mono text-xs">
                     {policy?.perTxLimitUsdc ?? "-"} USDC
                   </dd>
                 </div>
                 <div className="flex items-center justify-between">
-                  <dt className="text-paper/50">Daily Budget</dt>
-                  <dd className="rounded-md bg-ink px-2 py-0.5 font-mono text-xs">
+                  <dt className="text-app-muted">Daily Budget</dt>
+                  <dd className="rounded-md bg-app-bg px-2 py-0.5 font-mono text-xs">
                     {policy?.dailyLimitUsdc ?? "-"} USDC
                   </dd>
                 </div>
                 <div className="flex items-center justify-between">
-                  <dt className="text-paper/50">Approval above</dt>
-                  <dd className="rounded-md bg-ink px-2 py-0.5 font-mono text-xs">
+                  <dt className="text-app-muted">Approval above</dt>
+                  <dd className="rounded-md bg-app-bg px-2 py-0.5 font-mono text-xs">
                     {policy?.requireApprovalAboveUsdc ?? "-"} USDC
                   </dd>
                 </div>
@@ -186,9 +186,9 @@ export default async function DashboardPage() {
           </div>
 
           {/* Live ledger */}
-          <div className="mt-4 rounded-2xl border border-ink-line bg-ink-panel p-5">
+          <div className="mt-4 rounded-2xl border border-app-border bg-app-panel p-5">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.1em] text-paper/40">
+              <p className="text-xs uppercase tracking-[0.1em] text-app-muted-2">
                 Payment_Intents — Live Ledger
               </p>
               <Link href="/transactions" className="text-xs text-confirmed hover:underline">
@@ -197,7 +197,7 @@ export default async function DashboardPage() {
             </div>
 
             {ledgerRows.length === 0 ? (
-              <p className="mt-4 text-sm text-paper/40">
+              <p className="mt-4 text-sm text-app-muted-2">
                 No payments yet — go to{" "}
                 <Link href="/agent" className="text-confirmed hover:underline">
                   Agent
@@ -208,7 +208,7 @@ export default async function DashboardPage() {
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[560px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-ink-line text-xs uppercase tracking-[0.05em] text-paper/40">
+                    <tr className="border-b border-app-border text-xs uppercase tracking-[0.05em] text-app-muted-2">
                       <th className="py-2 pr-3 font-normal">Time</th>
                       <th className="py-2 pr-3 font-normal">Intent / Action</th>
                       <th className="py-2 pr-3 font-normal">Amount</th>
@@ -218,23 +218,23 @@ export default async function DashboardPage() {
                   </thead>
                   <tbody>
                     {ledgerRows.map((row) => (
-                      <tr key={row.id} className="border-b border-ink-line/60">
-                        <td className="whitespace-nowrap py-2.5 pr-3 font-mono text-xs text-paper/40">
+                      <tr key={row.id} className="border-b border-app-border/60">
+                        <td className="whitespace-nowrap py-2.5 pr-3 font-mono text-xs text-app-muted-2">
                           {new Date(row.createdAt).toLocaleTimeString("en-US", { hour12: false })}
                         </td>
-                        <td className="max-w-[14rem] truncate py-2.5 pr-3 text-paper/80">
+                        <td className="max-w-[14rem] truncate py-2.5 pr-3 text-app-text">
                           {row.serviceName ?? row.recipient}
                         </td>
-                        <td className="whitespace-nowrap py-2.5 pr-3 font-mono text-xs text-paper/50">
+                        <td className="whitespace-nowrap py-2.5 pr-3 font-mono text-xs text-app-muted">
                           {row.amountUsdc.toFixed(2)} USDC
                         </td>
-                        <td className="whitespace-nowrap py-2.5 pr-3 text-xs text-paper/50">
+                        <td className="whitespace-nowrap py-2.5 pr-3 text-xs text-app-muted">
                           {row.policyDecision ? POLICY_CHECK_LABEL[row.policyDecision] ?? row.policyDecision : "-"}
                         </td>
                         <td className="whitespace-nowrap py-2.5">
                           <span
                             className={`rounded-full px-2 py-0.5 text-[11px] uppercase tracking-wide ${
-                              STATUS_CLASS[row.status] ?? "bg-paper/10 text-paper/50"
+                              STATUS_CLASS[row.status] ?? "bg-app-border text-app-muted"
                             }`}
                           >
                             {STATUS_LABEL[row.status] ?? row.status}

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { LogoMark } from "@/components/LogoMark";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getTheme, setTheme, type Theme } from "@/lib/theme";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Overview", shortLabel: "Home", icon: HomeIcon },
@@ -22,6 +24,17 @@ const DOCS_LINK = "https://github.com/longbds0108/Pay-Agent/blob/main/docs/TECHN
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [theme, setThemeState] = useState<Theme>("dark");
+
+  useEffect(() => {
+    setThemeState(getTheme());
+  }, []);
+
+  function toggleTheme() {
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    setThemeState(next);
+  }
 
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
@@ -33,11 +46,11 @@ export function AppSidebar() {
   return (
     <>
       {/* Desktop: sidebar dọc */}
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-ink-line bg-ink-panel md:flex">
-        <Link href="/dashboard" className="flex items-center gap-2 px-5 py-5 text-sm font-semibold text-paper">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-app-border bg-app-panel md:flex">
+        <Link href="/dashboard" className="flex items-center gap-2 px-5 py-5 text-sm font-semibold text-app-text">
           <LogoMark />
           AgentPay
-          <span className="ml-auto rounded-full border border-ink-line px-2 py-0.5 font-mono text-[10px] font-normal text-paper/40">
+          <span className="ml-auto rounded-full border border-app-border px-2 py-0.5 font-mono text-[10px] font-normal text-app-muted">
             Arc
           </span>
         </Link>
@@ -51,7 +64,7 @@ export function AppSidebar() {
                 key={link.href}
                 href={link.href}
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
-                  active ? "bg-confirmed/15 text-confirmed" : "text-paper/55 hover:text-paper"
+                  active ? "bg-confirmed/15 text-confirmed" : "text-app-muted hover:text-app-text"
                 }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -63,14 +76,22 @@ export function AppSidebar() {
             href={DOCS_LINK}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-paper/55 transition hover:text-paper"
+            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-app-muted transition hover:text-app-text"
           >
             <ApiIcon className="h-4 w-4 shrink-0" />
             API &amp; SDK
           </a>
         </nav>
 
-        <div className="border-t border-ink-line p-3">
+        <div className="border-t border-app-border p-3">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-app-muted transition hover:text-app-text"
+          >
+            {theme === "dark" ? <SunIcon className="h-4 w-4 shrink-0" /> : <MoonIcon className="h-4 w-4 shrink-0" />}
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
           <button
             type="button"
             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-denied/80 transition hover:bg-denied/10 hover:text-denied"
@@ -82,7 +103,7 @@ export function AppSidebar() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="mt-1 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-paper/40 transition hover:text-paper/70"
+            className="mt-1 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-app-muted-2 transition hover:text-app-muted"
           >
             <SignOutIcon className="h-4 w-4 shrink-0" />
             Sign out
@@ -91,8 +112,8 @@ export function AppSidebar() {
       </aside>
 
       {/* Mobile: thanh ngang gọn */}
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-ink-line bg-ink-panel px-4 py-3 md:hidden">
-        <Link href="/dashboard" className="flex shrink-0 items-center gap-2 text-sm font-semibold text-paper">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-app-border bg-app-panel px-4 py-3 md:hidden">
+        <Link href="/dashboard" className="flex shrink-0 items-center gap-2 text-sm font-semibold text-app-text">
           <LogoMark />
         </Link>
         <nav className="flex min-w-0 flex-1 items-center justify-between gap-1">
@@ -103,7 +124,7 @@ export function AppSidebar() {
                 key={link.href}
                 href={link.href}
                 className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs transition ${
-                  active ? "bg-confirmed/15 text-confirmed" : "text-paper/55"
+                  active ? "bg-confirmed/15 text-confirmed" : "text-app-muted"
                 }`}
               >
                 {link.shortLabel}
@@ -111,7 +132,10 @@ export function AppSidebar() {
             );
           })}
         </nav>
-        <button type="button" onClick={handleSignOut} className="shrink-0 text-xs text-paper/40">
+        <button type="button" onClick={toggleTheme} className="shrink-0 text-app-muted">
+          {theme === "dark" ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
+        </button>
+        <button type="button" onClick={handleSignOut} className="shrink-0 text-xs text-app-muted-2">
           Sign out
         </button>
       </header>
@@ -180,6 +204,26 @@ function SignOutIcon(props: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={props.className}>
       <path d="M9 4 H6 a2 2 0 0 0 -2 2 V18 a2 2 0 0 0 2 2 H9" strokeLinecap="round" />
       <path d="M16 16 L20 12 L16 8 M9 12 H20" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SunIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={props.className}>
+      <circle cx="12" cy="12" r="4.2" />
+      <path
+        d="M12 2.5 V4.5 M12 19.5 V21.5 M4.2 4.2 L5.6 5.6 M18.4 18.4 L19.8 19.8 M2.5 12 H4.5 M19.5 12 H21.5 M4.2 19.8 L5.6 18.4 M18.4 5.6 L19.8 4.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MoonIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={props.className}>
+      <path d="M20 14.5 A8.5 8.5 0 1 1 9.5 4 A7 7 0 0 0 20 14.5 Z" />
     </svg>
   );
 }

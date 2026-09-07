@@ -17,6 +17,16 @@ const config: Config = {
         confirmed: "#4C8B67",
         pending: "#C08A3E",
         denied: "#A2493B",
+        // Token theme sáng/tối cho khu vực app (xem app/globals.css) —
+        // tách riêng khỏi ink/paper (cố định tối, dùng cho trang chủ).
+        app: {
+          bg: "var(--app-bg)",
+          panel: "var(--app-panel)",
+          border: "var(--app-border)",
+          text: "var(--app-text)",
+          muted: "var(--app-muted)",
+          "muted-2": "var(--app-muted-2)",
+        },
       },
     },
   },

@@ -80,57 +80,57 @@ export default function AgentChatPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex min-h-screen flex-col bg-app-bg text-app-text md:flex-row">
       <AppSidebar />
-      <main className="mx-auto flex w-full max-w-lg flex-col px-6 py-10">
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-6 py-10">
         <h1 className="mb-6 text-2xl font-semibold">Agent</h1>
-      <div className="flex-1 space-y-3 overflow-y-auto">
-        {messages.map((m, i) => (
-          <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
-            <span className="inline-block whitespace-pre-line rounded-lg bg-slate-100 px-3 py-2 text-sm">
-              {m.text}
-            </span>
-            {m.pendingPaymentIntentId && !resolvedIds.has(m.pendingPaymentIntentId) && (
-              <div className="mt-2 flex justify-start gap-2">
-                <button
-                  className="rounded-lg bg-slate-900 px-3 py-1 text-xs text-white"
-                  onClick={() => respondToPayment(m.pendingPaymentIntentId as string, "approve")}
-                >
-                  Approve
-                </button>
-                <button
-                  className="rounded-lg border border-slate-300 px-3 py-1 text-xs"
-                  onClick={() => respondToPayment(m.pendingPaymentIntentId as string, "reject")}
-                >
-                  Reject
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-        {messages.length === 0 && (
-          <p className="text-sm text-slate-400">
-            Thử: &quot;Pay the weather API for today&apos;s data&quot;
-          </p>
-        )}
-      </div>
-      <div className="mt-4 flex gap-2">
-        <input
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2"
-          placeholder="Pay the weather API $0.50 for today's data"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          disabled={sending}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={sending}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
-        >
-          {sending ? "..." : "Send"}
-        </button>
-      </div>
+        <div className="flex-1 space-y-3 overflow-y-auto">
+          {messages.map((m, i) => (
+            <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
+              <span className="inline-block whitespace-pre-line rounded-lg border border-app-border bg-app-panel px-3 py-2 text-sm">
+                {m.text}
+              </span>
+              {m.pendingPaymentIntentId && !resolvedIds.has(m.pendingPaymentIntentId) && (
+                <div className="mt-2 flex justify-start gap-2">
+                  <button
+                    className="rounded-lg bg-confirmed px-3 py-1 text-xs text-white transition hover:opacity-90"
+                    onClick={() => respondToPayment(m.pendingPaymentIntentId as string, "approve")}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    className="rounded-lg border border-app-border px-3 py-1 text-xs transition hover:bg-app-panel"
+                    onClick={() => respondToPayment(m.pendingPaymentIntentId as string, "reject")}
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          {messages.length === 0 && (
+            <p className="text-sm text-app-muted-2">
+              Thử: &quot;Pay the weather API for today&apos;s data&quot;
+            </p>
+          )}
+        </div>
+        <div className="mt-4 flex gap-2">
+          <input
+            className="flex-1 rounded-lg border border-app-border bg-app-panel px-3 py-2 text-app-text"
+            placeholder="Pay the weather API $0.50 for today's data"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            disabled={sending}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={sending}
+            className="rounded-lg bg-confirmed px-4 py-2 text-white transition hover:opacity-90 disabled:opacity-50"
+          >
+            {sending ? "..." : "Send"}
+          </button>
+        </div>
       </main>
     </div>
   );

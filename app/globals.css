@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Token theme cho khu vực "app" (Dashboard/Agent/Policy/Transactions +
+   AppSidebar) — KHÔNG áp dụng cho trang chủ marketing (app/page.tsx), vốn
+   cố định tối theo chủ đích thiết kế riêng. Mặc định tối; đổi sang sáng khi
+   <html data-theme="light">. Toggle thật ở components/AppSidebar.tsx. */
+:root {
+  --app-bg: #081818;
+  --app-panel: #161a20;
+  --app-border: #262c34;
+  --app-text: #ede7d9;
+  --app-muted: #ede7d980;
+  --app-muted-2: #ede7d940;
+}
+
+[data-theme="light"] {
+  --app-bg: #f6f4ee;
+  --app-panel: #ffffff;
+  --app-border: #e2ddd0;
+  --app-text: #14181a;
+  --app-muted: #14181a80;
+  --app-muted-2: #14181a40;
+}
+
 /* Dải "ledger" tự cuộn trên trang chủ (app/page.tsx) — minh hoạ state machine
    thanh toán thật. Tôn trọng prefers-reduced-motion. */
 @keyframes ledger-scroll {

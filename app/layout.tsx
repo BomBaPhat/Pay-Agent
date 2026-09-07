@@ -17,9 +17,26 @@ export const metadata: Metadata = {
   },
 };
 
+// Đặt data-theme trên <html> TRƯỚC khi React hydrate, để tránh nháy sai theme
+// (đọc localStorage — không đọc được ở server nên phải chạy inline, sớm nhất
+// có thể). Chỉ ảnh hưởng khu vực "app" (xem app/globals.css); trang chủ
+// marketing dùng ink/paper cố định, không đọc theme này.
+const THEME_INIT_SCRIPT = `
+(function () {
+  try {
+    var stored = localStorage.getItem("agentpay-theme");
+    var theme = stored === "light" || stored === "dark" ? stored : "dark";
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-screen bg-slate-50 text-slate-900">{children}</body>
     </html>
   );
