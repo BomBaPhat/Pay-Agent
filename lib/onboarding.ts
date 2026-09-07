@@ -27,14 +27,51 @@ export async function ensureOnboarded(
 ): Promise<OnboardResult> {
   const { data: existingAgent, error: existingAgentError } = await supabase
     .from("agents")
-    .select("id, wallet_id, wallets!agents_wallet_id_fkey(address)")
+    .select("id, wallet_id, wallets!agents_wallet_id_fkey(address, type, provider_wallet_id)")
     .eq("user_id", userId)
     .maybeSingle();
 
   if (existingAgentError) throw existingAgentError;
 
   if (existingAgent) {
-    const walletRow = existingAgent.wallets as unknown as { address: string } | null;
+    const walletRow = existingAgent.wallets as unknown as {
+      address: string;
+      type: string;
+      provider_wallet_id: string | null;
+    } | null;
+
+    // Lần onboard trước Circle chưa cấu hình xong nên ví bị kẹt ở trạng thái
+    // pending (type=circle_smart_account nhưng provider_wallet_id null) —
+    // thử tạo lại thay vì trả về mãi dữ liệu placeholder cũ. Không throw nếu
+    // vẫn thất bại, chỉ ghi nhận lỗi như lần onboard đầu.
+    if (walletRow && walletRow.type === "circle_smart_account" && !walletRow.provider_wallet_id) {
+      try {
+        const circle = createAgentWalletClient();
+        const result = await circle.createSmartAccount(userId);
+
+        const { error: updateError } = await supabase
+          .from("wallets")
+          .update({ address: result.address, provider_wallet_id: result.providerWalletId })
+          .eq("id", existingAgent.wallet_id as string);
+
+        if (updateError) throw updateError;
+
+        return {
+          agentId: existingAgent.id as string,
+          walletId: existingAgent.wallet_id as string,
+          walletAddress: result.address,
+          walletSetupError: null,
+        };
+      } catch (err) {
+        return {
+          agentId: existingAgent.id as string,
+          walletId: existingAgent.wallet_id as string,
+          walletAddress: walletRow.address,
+          walletSetupError: err instanceof Error ? err.message : "Không tạo được Agent Wallet.",
+        };
+      }
+    }
+
     return {
       agentId: existingAgent.id as string,
       walletId: existingAgent.wallet_id as string,
