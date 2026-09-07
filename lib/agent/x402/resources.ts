@@ -26,6 +26,6 @@ export const X402_DEMO_RESOURCES: X402Resource[] = [
 ];
 
 export function getX402ResourceUrl(resource: X402Resource): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   return `${base}${resource.path}`;
 }

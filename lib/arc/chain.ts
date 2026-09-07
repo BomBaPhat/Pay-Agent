@@ -21,12 +21,12 @@ const DEFAULT_ARC_TESTNET_RPC_WS = "wss://rpc.testnet.arc.io";
 const DEFAULT_ARC_TESTNET_CHAIN_ID = 5042002;
 
 export const arcTestnet = defineChain({
-  id: Number(process.env.NEXT_PUBLIC_ARC_CHAIN_ID ?? DEFAULT_ARC_TESTNET_CHAIN_ID),
+  id: Number(process.env.NEXT_PUBLIC_ARC_CHAIN_ID || DEFAULT_ARC_TESTNET_CHAIN_ID),
   name: "Arc Testnet",
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 6 },
   rpcUrls: {
     default: {
-      http: [process.env.NEXT_PUBLIC_ARC_RPC_URL ?? DEFAULT_ARC_TESTNET_RPC_HTTP],
+      http: [process.env.NEXT_PUBLIC_ARC_RPC_URL || DEFAULT_ARC_TESTNET_RPC_HTTP],
       webSocket: [DEFAULT_ARC_TESTNET_RPC_WS],
     },
   },
