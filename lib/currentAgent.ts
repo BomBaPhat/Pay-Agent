@@ -4,6 +4,7 @@ import type { SpendingPolicy, Wallet, WalletType } from "@/types";
 export interface CurrentAgentContext {
   userId: string;
   agentId: string;
+  agentName: string;
   wallet: Wallet;
   policy: SpendingPolicy | null;
 }
@@ -26,7 +27,7 @@ export async function getCurrentAgentContext(): Promise<CurrentAgentContext | nu
 
   const { data: agentRow, error: agentError } = await supabase
     .from("agents")
-    .select("id, wallet_id")
+    .select("id, wallet_id, name")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -70,7 +71,13 @@ export async function getCurrentAgentContext(): Promise<CurrentAgentContext | nu
       }
     : null;
 
-  return { userId: user.id, agentId: agentRow.id as string, wallet, policy };
+  return {
+    userId: user.id,
+    agentId: agentRow.id as string,
+    agentName: (agentRow.name as string | null) ?? "My Agent",
+    wallet,
+    policy,
+  };
 }
 
 /** Tổng USDC đã chi (transactions đã confirmed) trong ngày hôm nay, theo giờ server. */
