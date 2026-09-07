@@ -21,13 +21,21 @@ export interface ServiceSpend {
   count: number;
 }
 
+export interface DaySpend {
+  date: string;
+  label: string;
+  totalUsdc: number;
+}
+
 export interface AuditReport {
   totalSpentUsdc: number;
+  spentTodayUsdc: number;
   confirmedCount: number;
   autoApprovedCount: number;
   requireApprovalCount: number;
   rejectedCount: number;
   byService: ServiceSpend[];
+  byDay: DaySpend[];
   rows: AuditRow[];
 }
 
@@ -116,13 +124,48 @@ export async function getAuditReport(agentId: string): Promise<AuditReport> {
 
   const byService = Array.from(spendByLabel.values()).sort((a, b) => b.totalUsdc - a.totalUsdc);
 
+  // Chi tiêu 7 ngày gần nhất (kể cả hôm nay), theo giờ server — dùng cho
+  // biểu đồ "Spending Analytics" trên dashboard.
+  const dayBuckets = new Map<string, number>();
+  const dayOrder: string[] = [];
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  for (let i = 6; i >= 0; i -= 1) {
+    const d = new Date(todayStart);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    dayBuckets.set(key, 0);
+    dayOrder.push(key);
+  }
+
+  let spentTodayUsdc = 0;
+  const todayKey = todayStart.toISOString().slice(0, 10);
+
+  for (const row of rows) {
+    if (row.status !== "confirmed" || !row.confirmedAt) continue;
+    const key = row.confirmedAt.slice(0, 10);
+    if (dayBuckets.has(key)) {
+      dayBuckets.set(key, (dayBuckets.get(key) ?? 0) + row.amountUsdc);
+    }
+    if (key === todayKey) spentTodayUsdc += row.amountUsdc;
+  }
+
+  const byDay: DaySpend[] = dayOrder.map((key) => ({
+    date: key,
+    label: new Date(key + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" }),
+    totalUsdc: dayBuckets.get(key) ?? 0,
+  }));
+
   return {
     totalSpentUsdc,
+    spentTodayUsdc,
     confirmedCount,
     autoApprovedCount,
     requireApprovalCount,
     rejectedCount,
     byService,
+    byDay,
     rows,
   };
 }
