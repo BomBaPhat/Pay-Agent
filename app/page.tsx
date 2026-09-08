@@ -175,14 +175,12 @@ export default function HomePage() {
             >
               FAQ
             </a>
-            <a
-              href="https://github.com/longbds0108/Pay-Agent/blob/main/docs/TECHNICAL_SPEC_v0.1.md"
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              href="/docs"
               className={`rounded-full border border-ink/15 px-4 py-1.5 transition hover:border-[#4f8b68] hover:bg-[#4f8b68] hover:text-paper ${linkFocus}`}
             >
               Docs
-            </a>
+            </Link>
           </nav>
 
           <Link
@@ -371,14 +369,9 @@ export default function HomePage() {
               /agent
             </Link>{" "}
             uses — see the full endpoint list in{" "}
-            <a
-              href="https://github.com/longbds0108/Pay-Agent/blob/main/docs/TECHNICAL_SPEC_v0.1.md"
-              target="_blank"
-              rel="noreferrer"
-              className={`underline decoration-ink/20 underline-offset-2 hover:text-ink ${linkFocus}`}
-            >
+            <Link href="/api-docs" className={`underline decoration-ink/20 underline-offset-2 hover:text-ink ${linkFocus}`}>
               the docs
-            </a>
+            </Link>
             .
           </p>
         </div>
@@ -448,14 +441,9 @@ export default function HomePage() {
             >
               GitHub
             </a>
-            <a
-              href="https://github.com/longbds0108/Pay-Agent/blob/main/docs/TECHNICAL_SPEC_v0.1.md"
-              target="_blank"
-              rel="noreferrer"
-              className={`transition hover:text-paper ${linkFocus}`}
-            >
+            <Link href="/docs" className={`transition hover:text-paper ${linkFocus}`}>
               Docs
-            </a>
+            </Link>
           </nav>
         </div>
       </footer>
