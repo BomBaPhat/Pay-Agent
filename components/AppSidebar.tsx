@@ -12,9 +12,8 @@ const NAV_LINKS = [
   { href: "/agent", label: "Agents", shortLabel: "Agents", icon: AgentIcon },
   { href: "/policy", label: "Policy Rules", shortLabel: "Policy", icon: ShieldIcon },
   { href: "/transactions", label: "Intents Ledger", shortLabel: "Ledger", icon: LedgerIcon },
+  { href: "/api-docs", label: "API & SDK", shortLabel: "API", icon: ApiIcon },
 ];
-
-const DOCS_LINK = "https://github.com/longbds0108/Pay-Agent/blob/main/docs/TECHNICAL_SPEC_v0.1.md";
 
 /**
  * Điều hướng dùng chung cho các trang sau đăng nhập — sidebar dọc bên trái
@@ -72,15 +71,6 @@ export function AppSidebar() {
               </Link>
             );
           })}
-          <a
-            href={DOCS_LINK}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-app-muted transition hover:text-app-text"
-          >
-            <ApiIcon className="h-4 w-4 shrink-0" />
-            API &amp; SDK
-          </a>
         </nav>
 
         <div className="border-t border-app-border p-3">
