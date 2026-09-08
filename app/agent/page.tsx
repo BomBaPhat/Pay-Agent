@@ -89,17 +89,23 @@ export default async function AgentPage() {
                 <div className="flex items-center justify-between">
                   <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-app-muted">
                     <span className="h-1.5 w-1.5 rounded-full bg-confirmed" />
-                    Active Agent
+                    Active Agents
                   </p>
                   <span
-                    className="rounded-full border border-dashed border-app-border px-2 py-0.5 text-[11px] text-app-muted-2"
+                    className="flex cursor-not-allowed items-center gap-1 rounded-full bg-confirmed px-2.5 py-1 text-[11px] font-medium text-white opacity-90"
                     title="Multi-agent — coming soon"
                   >
-                    + New
+                    <PlusIcon className="h-2.5 w-2.5" />
+                    New
                   </span>
                 </div>
 
                 <div className="mt-3 flex items-center gap-3 rounded-xl bg-confirmed/10 px-3 py-3">
+                  <span
+                    className={`h-2.5 w-2.5 shrink-0 rounded-full border-2 ${
+                      walletPending ? "border-pending" : "border-confirmed bg-confirmed"
+                    }`}
+                  />
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-confirmed/20 text-confirmed">
                     <CloudIcon className="h-4 w-4" />
                   </span>
@@ -110,12 +116,13 @@ export default async function AgentPage() {
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
-                      walletPending ? "bg-pending/15 text-pending" : "bg-confirmed/15 text-confirmed"
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                      walletPending ? "bg-pending/15 text-pending" : "bg-confirmed text-white"
                     }`}
                   >
                     {walletPending ? "Idle" : "Active"}
                   </span>
+                  <ChevronIcon className="h-3.5 w-3.5 shrink-0 text-app-muted-2" />
                 </div>
               </div>
 
@@ -129,8 +136,9 @@ export default async function AgentPage() {
                 ) : (
                   <ul className="mt-2 divide-y divide-app-border">
                     {history.map((h) => (
-                      <li key={h.id} className="flex items-center justify-between gap-2 py-2 text-sm">
-                        <span className="min-w-0 truncate text-app-text">{h.label}</span>
+                      <li key={h.id} className="flex items-center gap-2.5 py-2 text-sm">
+                        <ReceiptIcon className="h-3.5 w-3.5 shrink-0 text-app-muted-2" />
+                        <span className="min-w-0 flex-1 truncate text-app-text">{h.label}</span>
                         <span className="shrink-0 text-xs text-app-muted-2">{h.timeAgo}</span>
                       </li>
                     ))}
@@ -189,6 +197,31 @@ function HistoryIcon(props: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={props.className}>
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 7.5 V12 L14.5 13.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PlusIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={props.className}>
+      <path d="M12 5 V19 M5 12 H19" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ChevronIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={props.className}>
+      <path d="M9 5 L15 12 L9 19" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ReceiptIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={props.className}>
+      <path d="M6 3.5 H18 V20.5 L15.5 19 L13 20.5 L10.5 19 L8 20.5 L5.5 19 V4.7" strokeLinejoin="round" />
+      <path d="M9 8.5 H15 M9 12 H15" strokeLinecap="round" />
     </svg>
   );
 }

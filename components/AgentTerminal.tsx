@@ -34,6 +34,118 @@ function newId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Icon nhỏ trước mỗi dòng log — suy ra từ nội dung bước (parse/policy/exec/done) và tone, để giống terminal có step-by-step thật thay vì text thuần. */
+function LineIcon({ line }: { line: LogLine }) {
+  const cls = `h-3 w-3 shrink-0 ${TONE_CLASS[line.tone]}`;
+  if (line.text.startsWith("> User:")) return <UserLineIcon className={cls} />;
+  if (line.text.includes("Checking Policy")) return <CheckLineIcon className={cls} />;
+  if (line.text.includes("Executing Tx")) return <GearLineIcon className={cls} />;
+  if (line.text.includes("Executed!") || line.text.includes("Approved but")) return <CheckLineIcon className={cls} />;
+  if (line.text.includes("Held —")) return <ClockLineIcon className={cls} />;
+  if (line.tone === "error") return <XLineIcon className={cls} />;
+  return <InfoLineIcon className={cls} />;
+}
+
+function UserLineIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={props.className}>
+      <circle cx="12" cy="8" r="3.4" />
+      <path d="M5.5 20 C5.5 15.8 8.3 13.5 12 13.5 C15.7 13.5 18.5 15.8 18.5 20" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function InfoLineIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={props.className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 11 V16.5" strokeLinecap="round" />
+      <circle cx="12" cy="8" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function CheckLineIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={props.className}>
+      <path d="M4.5 12.5 L9.5 17.5 L19.5 6.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function GearLineIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={props.className}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3.5 V6 M12 18 V20.5 M20.5 12 H18 M6 12 H3.5 M17.7 6.3 L16 8 M8 16 L6.3 17.7 M17.7 17.7 L16 16 M8 8 L6.3 6.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ClockLineIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={props.className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5 V12 L15 14" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function XLineIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={props.className}>
+      <path d="M6 6 L18 18 M18 6 L6 18" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Icon + màu cho mỗi suggested-prompt, suy ra từ tên dịch vụ (không có field category riêng trong DB). */
+function promptVisual(name: string): { Icon: (p: { className?: string }) => JSX.Element; classes: string } {
+  const n = name.toLowerCase();
+  if (n.includes("weather")) return { Icon: CloudPromptIcon, classes: "bg-sky-500/15 text-sky-500" };
+  if (n.includes("swap") || n.includes("uniswap") || n.includes("dex")) {
+    return { Icon: SwapPromptIcon, classes: "bg-orange-500/15 text-orange-500" };
+  }
+  if (n.includes("api") || n.includes("gpt") || n.includes("openai") || n.includes("ai")) {
+    return { Icon: ChipPromptIcon, classes: "bg-violet-500/15 text-violet-500" };
+  }
+  return { Icon: BoltPromptIcon, classes: "bg-confirmed/15 text-confirmed" };
+}
+
+function CloudPromptIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={props.className}>
+      <path d="M7 17.5 A4 4 0 1 1 8 9.6 A5 5 0 0 1 18 11.5 A3.5 3.5 0 0 1 17.5 17.5 Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SwapPromptIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={props.className}>
+      <path d="M4 8 H17 M13.5 4.5 L17 8 L13.5 11.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20 16 H7 M10.5 12.5 L7 16 L10.5 19.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChipPromptIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={props.className}>
+      <rect x="7" y="7" width="10" height="10" rx="1.5" />
+      <path d="M9.5 7 V4.3 M14.5 7 V4.3 M9.5 20 V17 M14.5 20 V17 M7 9.5 H4.3 M7 14.5 H4.3 M20 9.5 H17 M20 14.5 H17" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function BoltPromptIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={props.className}>
+      <path d="M13 2 L4.5 13.5 H11 L10.2 22 L19.5 9.5 H13 Z" />
+    </svg>
+  );
+}
+
 export function AgentTerminal({ agentName, services }: AgentTerminalProps) {
   const [log, setLog] = useState<LogLine[]>([]);
   const [input, setInput] = useState("");
@@ -157,19 +269,25 @@ export function AgentTerminal({ agentName, services }: AgentTerminalProps) {
         <div className="border-b border-app-border px-4 py-3">
           <p className="text-xs uppercase tracking-[0.08em] text-app-muted-2">Suggested Prompts</p>
           <div className="mt-2 grid gap-2 sm:grid-cols-3">
-            {suggested.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                disabled={sending}
-                onClick={() => sendMessage(`Pay $${s.priceUsdc.toFixed(2)} ${s.name} for today's data`)}
-                className="rounded-lg border border-app-border px-3 py-2 text-left text-xs transition hover:border-confirmed/50 hover:bg-confirmed/5 disabled:opacity-50"
-              >
-                <span className="block font-medium text-app-text">
-                  Pay ${s.priceUsdc.toFixed(2)} {s.name}
-                </span>
-              </button>
-            ))}
+            {suggested.map((s) => {
+              const { Icon, classes } = promptVisual(s.name);
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  disabled={sending}
+                  onClick={() => sendMessage(`Pay $${s.priceUsdc.toFixed(2)} ${s.name} for today's data`)}
+                  className="flex items-start gap-2.5 rounded-lg border border-app-border px-3 py-2.5 text-left text-xs transition hover:border-confirmed/50 hover:bg-confirmed/5 disabled:opacity-50"
+                >
+                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${classes}`}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="font-medium leading-snug text-app-text">
+                    Pay ${s.priceUsdc.toFixed(2)} {s.name}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -200,8 +318,10 @@ export function AgentTerminal({ agentName, services }: AgentTerminalProps) {
               );
             }
             return (
-              <p key={line.id} className={TONE_CLASS[line.tone]}>
-                <span className="text-app-muted-2">[{line.time}]</span> {line.text}
+              <p key={line.id} className={`flex items-start gap-1.5 ${TONE_CLASS[line.tone]}`}>
+                <span className="text-app-muted-2">[{line.time}]</span>
+                <LineIcon line={line} />
+                <span className="min-w-0 break-words">{line.text}</span>
               </p>
             );
           })}
@@ -223,7 +343,7 @@ export function AgentTerminal({ agentName, services }: AgentTerminalProps) {
           <button
             onClick={() => sendMessage()}
             disabled={sending}
-            className="flex items-center gap-1.5 rounded-lg bg-confirmed px-4 py-2 text-sm text-white transition hover:opacity-90 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-app-text px-4 py-2 text-sm font-medium text-app-bg transition hover:opacity-90 disabled:opacity-50"
           >
             <SendIcon className="h-3.5 w-3.5" />
             {sending ? "..." : "Send"}
