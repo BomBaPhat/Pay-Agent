@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
+import { Web3Providers } from "@/components/Web3Providers";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -12,9 +15,11 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
-      <LoginForm />
-    </Suspense>
+    <Web3Providers>
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
+    </Web3Providers>
   );
 }
 
@@ -24,6 +29,9 @@ function LoginForm() {
   const errorParam = searchParams.get("error");
   const [loading, setLoading] = useState<"google" | "evm" | null>(null);
   const [error, setError] = useState<string | null>(errorParam ? ERROR_MESSAGES[errorParam] ?? errorParam : null);
+  const { isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  const [awaitingConnect, setAwaitingConnect] = useState(false);
 
   async function handleGoogleLogin() {
     setError(null);
@@ -50,21 +58,20 @@ function LoginForm() {
     }
   }
 
-  async function handleEvmLogin() {
-    setError(null);
-
-    if (typeof window === "undefined" || !window.ethereum) {
-      setError("Không tìm thấy ví EVM (MetaMask, v.v.) trong trình duyệt.");
-      return;
-    }
-
+  async function signInWithConnectedWallet() {
     setLoading("evm");
     try {
+      if (typeof window === "undefined" || !window.ethereum) {
+        throw new Error("Không tìm thấy ví EVM trong trình duyệt sau khi kết nối.");
+      }
+
       const supabase = createSupabaseBrowserClient();
 
       // Dùng tính năng Sign-In-With-Ethereum có sẵn của Supabase Auth (cần
       // bật "Web3 Wallet" provider trong Supabase Auth settings — xem
-      // docs/SETUP.md). Tự lấy chữ ký qua window.ethereum, không cần wagmi.
+      // docs/SETUP.md). RainbowKit/wagmi chỉ lo phần chọn + kết nối ví; chữ
+      // ký SIWE vẫn lấy qua window.ethereum như cũ (ví injected đã kết nối
+      // qua RainbowKit thì window.ethereum cũng phản ánh đúng ví đó).
       const { data, error: web3Error } = await supabase.auth.signInWithWeb3({
         chain: "ethereum",
         statement: "Đăng nhập vào AgentPay để agent AI thanh toán USDC trên Arc theo policy của bạn.",
@@ -98,7 +105,33 @@ function LoginForm() {
       setError(err instanceof Error ? err.message : "Đăng nhập ví EVM thất bại.");
     } finally {
       setLoading(null);
+      setAwaitingConnect(false);
     }
+  }
+
+  // Vừa kết nối ví xong qua modal RainbowKit (do bấm nút bên dưới trước đó)
+  // -> tự động tiếp tục bước ký SIWE, không cần bấm thêm lần nữa.
+  useEffect(() => {
+    if (isConnected && awaitingConnect) {
+      void signInWithConnectedWallet();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected, awaitingConnect]);
+
+  function handleEvmLogin() {
+    setError(null);
+
+    if (!isConnected) {
+      if (!openConnectModal) {
+        setError("Không mở được cửa sổ kết nối ví — thử tải lại trang.");
+        return;
+      }
+      setAwaitingConnect(true);
+      openConnectModal();
+      return;
+    }
+
+    void signInWithConnectedWallet();
   }
 
   return (
