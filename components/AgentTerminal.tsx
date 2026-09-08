@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { agentVisual, serviceVisual } from "@/lib/agent/visual";
 import type { Service } from "@/types";
 
 interface AgentTerminalProps {
@@ -38,9 +39,11 @@ function newId() {
 function LineIcon({ line }: { line: LogLine }) {
   const cls = `h-3 w-3 shrink-0 ${TONE_CLASS[line.tone]}`;
   if (line.text.startsWith("> User:")) return <UserLineIcon className={cls} />;
+  if (line.text.includes("Executed!") || line.text.includes("Approved but")) {
+    return <DoneLineIcon className="h-3.5 w-3.5 shrink-0 text-confirmed" />;
+  }
   if (line.text.includes("Checking Policy")) return <CheckLineIcon className={cls} />;
   if (line.text.includes("Executing Tx")) return <GearLineIcon className={cls} />;
-  if (line.text.includes("Executed!") || line.text.includes("Approved but")) return <CheckLineIcon className={cls} />;
   if (line.text.includes("Held —")) return <ClockLineIcon className={cls} />;
   if (line.tone === "error") return <XLineIcon className={cls} />;
   return <InfoLineIcon className={cls} />;
@@ -73,6 +76,23 @@ function CheckLineIcon(props: { className?: string }) {
   );
 }
 
+/** Badge check đặc (khác CheckLineIcon viền mảnh) — dành riêng cho bước cuối "Executed!", nổi bật hơn để đánh dấu hoàn tất. */
+function DoneLineIcon(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={props.className}>
+      <rect x="3" y="3" width="18" height="18" rx="4" fill="currentColor" />
+      <path
+        d="M7.5 12.5 L10.5 15.5 L16.5 8.5"
+        fill="none"
+        stroke="white"
+        strokeWidth="2.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function GearLineIcon(props: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={props.className}>
@@ -95,53 +115,6 @@ function XLineIcon(props: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={props.className}>
       <path d="M6 6 L18 18 M18 6 L6 18" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/** Icon + màu cho mỗi suggested-prompt, suy ra từ tên dịch vụ (không có field category riêng trong DB). */
-function promptVisual(name: string): { Icon: (p: { className?: string }) => JSX.Element; classes: string } {
-  const n = name.toLowerCase();
-  if (n.includes("weather")) return { Icon: CloudPromptIcon, classes: "bg-sky-500/15 text-sky-500" };
-  if (n.includes("swap") || n.includes("uniswap") || n.includes("dex")) {
-    return { Icon: SwapPromptIcon, classes: "bg-orange-500/15 text-orange-500" };
-  }
-  if (n.includes("api") || n.includes("gpt") || n.includes("openai") || n.includes("ai")) {
-    return { Icon: ChipPromptIcon, classes: "bg-violet-500/15 text-violet-500" };
-  }
-  return { Icon: BoltPromptIcon, classes: "bg-confirmed/15 text-confirmed" };
-}
-
-function CloudPromptIcon(props: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={props.className}>
-      <path d="M7 17.5 A4 4 0 1 1 8 9.6 A5 5 0 0 1 18 11.5 A3.5 3.5 0 0 1 17.5 17.5 Z" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function SwapPromptIcon(props: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={props.className}>
-      <path d="M4 8 H17 M13.5 4.5 L17 8 L13.5 11.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M20 16 H7 M10.5 12.5 L7 16 L10.5 19.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ChipPromptIcon(props: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={props.className}>
-      <rect x="7" y="7" width="10" height="10" rx="1.5" />
-      <path d="M9.5 7 V4.3 M14.5 7 V4.3 M9.5 20 V17 M14.5 20 V17 M7 9.5 H4.3 M7 14.5 H4.3 M20 9.5 H17 M20 14.5 H17" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function BoltPromptIcon(props: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={props.className}>
-      <path d="M13 2 L4.5 13.5 H11 L10.2 22 L19.5 9.5 H13 Z" />
     </svg>
   );
 }
@@ -247,30 +220,33 @@ export function AgentTerminal({ agentName, services }: AgentTerminalProps) {
   }
 
   const suggested = services.slice(0, 3);
+  const { Icon: AgentIcon, classes: agentIconClasses } = agentVisual(agentName);
 
   return (
     <div className="flex min-w-0 flex-col rounded-2xl border border-app-border bg-app-panel">
       <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
         <p className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.05em]">
-          <span className="h-1.5 w-1.5 rounded-full bg-confirmed" />
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${agentIconClasses}`}>
+            <AgentIcon className="h-3 w-3" />
+          </span>
           {agentName} Terminal
         </p>
         <div className="flex items-center gap-3 text-xs">
           <button type="button" onClick={() => setLog([])} className="text-confirmed hover:underline">
-            Clear
+            [Clear]
           </button>
           <Link href="/policy" className="text-confirmed hover:underline">
-            Settings
+            [Settings]
           </Link>
         </div>
       </div>
 
       {suggested.length > 0 && (
         <div className="border-b border-app-border px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.08em] text-app-muted-2">Suggested Prompts</p>
+          <p className="text-xs font-medium uppercase tracking-[0.08em] text-app-muted">Suggested Prompts:</p>
           <div className="mt-2 grid gap-2 sm:grid-cols-3">
             {suggested.map((s) => {
-              const { Icon, classes } = promptVisual(s.name);
+              const { Icon, classes } = serviceVisual(s.name);
               return (
                 <button
                   key={s.id}
@@ -293,7 +269,7 @@ export function AgentTerminal({ agentName, services }: AgentTerminalProps) {
       )}
 
       <div className="min-h-[16rem] flex-1 overflow-y-auto px-4 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-app-muted-2">Execution Logs</p>
+        <p className="text-xs font-medium uppercase tracking-[0.08em] text-app-muted">Execution Logs:</p>
         <div className="mt-2 space-y-1 font-mono text-[12.5px] leading-relaxed">
           {log.length === 0 && <p className="text-app-muted-2">Chưa có hoạt động — thử một suggested prompt bên trên.</p>}
           {log.map((line) => {
@@ -330,7 +306,7 @@ export function AgentTerminal({ agentName, services }: AgentTerminalProps) {
       </div>
 
       <div className="border-t border-app-border p-3">
-        <p className="mb-1.5 text-xs uppercase tracking-[0.08em] text-app-muted-2">Input Command</p>
+        <p className="mb-1.5 text-xs font-medium uppercase tracking-[0.08em] text-app-muted">Input Command:</p>
         <div className="flex gap-2">
           <input
             className="flex-1 rounded-lg border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text"

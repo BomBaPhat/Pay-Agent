@@ -3,10 +3,17 @@ import { AgentTerminal } from "@/components/AgentTerminal";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SupabaseSetupNotice } from "@/components/SupabaseSetupNotice";
 import { listServices } from "@/lib/agent/services";
+import { agentVisual, serviceVisual } from "@/lib/agent/visual";
 import { createAgentWalletClient } from "@/lib/circle/agentWallet";
 import { getCurrentAgentContext } from "@/lib/currentAgent";
 import { getAuditReport } from "@/lib/payments/audit";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
+
+/** 2 slot minh hoạ multi-agent sắp ra mắt — không phải agent thật, chỉ hiện để xem trước layout (giống "+ New"), luôn Idle và không bấm được. */
+const UPCOMING_AGENT_SLOTS = [
+  { name: "Trading Bot", limitLabel: "$20.00 Limit" },
+  { name: "Social Auto-Post", limitLabel: "$2.00 Limit" },
+];
 
 function truncateAddress(address: string) {
   return address.length > 12 ? `${address.slice(0, 6)}...${address.slice(-4)}` : address;
@@ -92,7 +99,7 @@ export default async function AgentPage() {
                     Active Agents
                   </p>
                   <span
-                    className="flex cursor-not-allowed items-center gap-1 rounded-full bg-confirmed px-2.5 py-1 text-[11px] font-medium text-white opacity-90"
+                    className="flex cursor-not-allowed items-center gap-1 rounded-full bg-confirmed/15 px-2.5 py-1 text-[11px] font-medium text-confirmed"
                     title="Multi-agent — coming soon"
                   >
                     <PlusIcon className="h-2.5 w-2.5" />
@@ -100,29 +107,58 @@ export default async function AgentPage() {
                   </span>
                 </div>
 
-                <div className="mt-3 flex items-center gap-3 rounded-xl bg-confirmed/10 px-3 py-3">
-                  <span
-                    className={`h-2.5 w-2.5 shrink-0 rounded-full border-2 ${
-                      walletPending ? "border-pending" : "border-confirmed bg-confirmed"
-                    }`}
-                  />
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-confirmed/20 text-confirmed">
-                    <CloudIcon className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{agentName}</p>
-                    <p className="text-xs text-app-muted">
-                      {(policy?.perTxLimitUsdc ?? 0).toFixed(2)} USDC per-tx limit
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                      walletPending ? "bg-pending/15 text-pending" : "bg-confirmed text-white"
-                    }`}
-                  >
-                    {walletPending ? "Idle" : "Active"}
-                  </span>
-                  <ChevronIcon className="h-3.5 w-3.5 shrink-0 text-app-muted-2" />
+                <div className="mt-1 divide-y divide-app-border">
+                  {(() => {
+                    const { Icon, classes } = agentVisual(agentName);
+                    return (
+                      <div className="flex items-center gap-3 rounded-lg bg-sky-500/[0.06] px-2 py-3">
+                        <span
+                          className={`h-2.5 w-2.5 shrink-0 rounded-full border-2 ${
+                            walletPending ? "border-pending" : "border-confirmed bg-confirmed"
+                          }`}
+                        />
+                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${classes}`}>
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{agentName}</p>
+                          <p className="text-xs text-app-muted">${(policy?.perTxLimitUsdc ?? 0).toFixed(2)} Limit</p>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                            walletPending ? "bg-pending/15 text-pending" : "bg-confirmed/15 text-confirmed"
+                          }`}
+                        >
+                          {walletPending ? "Idle" : "Active"}
+                        </span>
+                        <ChevronIcon className="h-3.5 w-3.5 shrink-0 text-app-muted-2" />
+                      </div>
+                    );
+                  })()}
+
+                  {UPCOMING_AGENT_SLOTS.map((slot) => {
+                    const { Icon, classes } = agentVisual(slot.name);
+                    return (
+                      <div
+                        key={slot.name}
+                        className="flex cursor-not-allowed items-center gap-3 px-2 py-3 opacity-70"
+                        title="Multi-agent — coming soon"
+                      >
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-app-border" />
+                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${classes}`}>
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{slot.name}</p>
+                          <p className="text-xs text-app-muted">{slot.limitLabel}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-app-muted-2/20 px-2 py-0.5 text-[11px] font-medium text-app-muted">
+                          Idle
+                        </span>
+                        <ChevronIcon className="h-3.5 w-3.5 shrink-0 text-app-muted-2" />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -135,13 +171,18 @@ export default async function AgentPage() {
                   <p className="mt-3 text-sm text-app-muted-2">No activity yet.</p>
                 ) : (
                   <ul className="mt-2 divide-y divide-app-border">
-                    {history.map((h) => (
-                      <li key={h.id} className="flex items-center gap-2.5 py-2 text-sm">
-                        <ReceiptIcon className="h-3.5 w-3.5 shrink-0 text-app-muted-2" />
-                        <span className="min-w-0 flex-1 truncate text-app-text">{h.label}</span>
-                        <span className="shrink-0 text-xs text-app-muted-2">{h.timeAgo}</span>
-                      </li>
-                    ))}
+                    {history.map((h) => {
+                      const { Icon, classes } = serviceVisual(h.label);
+                      return (
+                        <li key={h.id} className="flex items-center gap-2.5 py-2 text-sm">
+                          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${classes}`}>
+                            <Icon className="h-3 w-3" />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-app-text">{h.label}</span>
+                          <span className="shrink-0 text-xs text-app-muted-2">{h.timeAgo}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -184,14 +225,6 @@ function WalletIcon(props: { className?: string }) {
   );
 }
 
-function CloudIcon(props: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={props.className}>
-      <path d="M7 17.5 A4 4 0 1 1 8 9.6 A5 5 0 0 1 18 11.5 A3.5 3.5 0 0 1 17.5 17.5 Z" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function HistoryIcon(props: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={props.className}>
@@ -213,15 +246,6 @@ function ChevronIcon(props: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={props.className}>
       <path d="M9 5 L15 12 L9 19" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ReceiptIcon(props: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={props.className}>
-      <path d="M6 3.5 H18 V20.5 L15.5 19 L13 20.5 L10.5 19 L8 20.5 L5.5 19 V4.7" strokeLinejoin="round" />
-      <path d="M9 8.5 H15 M9 12 H15" strokeLinecap="round" />
     </svg>
   );
 }
