@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentAgentContext } from "@/lib/currentAgent";
+import { getCurrentAgentContext, getSpentTodayUsdc } from "@/lib/currentAgent";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
+
+const ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
 const policySchema = z.object({
   dailyLimitUsdc: z.number().positive(),
   perTxLimitUsdc: z.number().positive(),
   requireApprovalAboveUsdc: z.number().nonnegative(),
+  allowedRecipients: z.union([z.literal("any"), z.array(z.string().regex(ADDRESS_REGEX))]),
 });
 
 const NOT_CONFIGURED_RESPONSE = () =>
@@ -20,7 +23,8 @@ export async function GET() {
     return NextResponse.json({ error: "Chưa đăng nhập hoặc chưa onboard xong." }, { status: 401 });
   }
 
-  return NextResponse.json({ policy: context.policy });
+  const spentTodayUsdc = await getSpentTodayUsdc(context.agentId);
+  return NextResponse.json({ policy: context.policy, spentTodayUsdc });
 }
 
 export async function POST(request: Request) {
@@ -45,6 +49,7 @@ export async function POST(request: Request) {
       daily_limit_usdc: parsed.data.dailyLimitUsdc,
       per_tx_limit_usdc: parsed.data.perTxLimitUsdc,
       require_approval_above_usdc: parsed.data.requireApprovalAboveUsdc,
+      allowed_recipients: parsed.data.allowedRecipients,
       updated_at: new Date().toISOString(),
     })
     .eq("agent_id", context.agentId);
